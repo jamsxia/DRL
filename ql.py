@@ -48,7 +48,7 @@ class QLAgent:
         episodes = 100
         state = self.env.reset()
         for _ in range(episodes):
-            state = env.reset()
+            state = self.env.reset()
             epochs, penalties, reward = 0, 0, 0
             
             done = False
