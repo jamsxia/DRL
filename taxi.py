@@ -2,15 +2,16 @@ import gymnasium as gym
 from ql import QLAgent
 import matplotlib.pyplot as plt
 
-env = gym.make("Taxi-v3")
+testing_env = gym.make("Taxi-v3", render_mode="human")
 
-agent=QLAgent(env)
+agent=QLAgent(testing_env)
 
-agent.play()
+# agent.play(testing_env, max_steps=20)
 
-nep=100001
-plotTable=agent.train(nep, 0.1,0.6,0.1)
+nep=100000
 
-plt.plot([i for i in range(nep)], plotTable)
+training_env = gym.make("Taxi-v3")
 
-agent.play()
+agent.train(training_env, nep, 0.1, 0.6,  0.1)
+
+agent.play(testing_env)

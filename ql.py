@@ -1,16 +1,19 @@
 import numpy as np
 import random
-from IPython.display import clear_output
+
 
 class QLAgent:
+
     def __init__(self, env):
-        self.env=env
+
         self.q=q_table = np.zeros([env.observation_space.n, env.action_space.n])
 
-    def train(self, neps, alpha, gamma , epsilon):
+    def train(self, env, neps, alpha, gamma , epsilon):
+
         plot=[]
+
         for i in range(1, neps):
-            state = self.env.reset()
+            state,_ = env.reset()
             epochs, penalties, reward, = 0, 0, 0
             done = False
             if(i%100==0):
@@ -22,7 +25,7 @@ class QLAgent:
                 else:
                     action = np.argmax(self.q[state]) # Exploit learned values
 
-                next_state, reward, done, info = self.env.step(action) 
+                next_state, reward, won, lost, info = env.step(action) 
                 
                 old_value = self.q[state, action]
                 next_max = np.max(self.q[next_state])
@@ -36,36 +39,41 @@ class QLAgent:
                 state = next_state
                 epochs += 1
                 
-            if i % 100 == 0:
+            '''if i % 100 == 0:
                 clear_output(wait=True)
-                
+                '''
             plot[i]=reward    
 
         return plot
 
-    def play(self):
-        total_epochs, total_penalties = 0, 0
-        episodes = 100
-        state = self.env.reset()
-        for _ in range(episodes):
-            state = self.env.reset()
-            epochs, penalties, reward = 0, 0, 0
+    def play(self, env, max_steps=None):
+
+        state, _ = env.reset()
+
+        steps = 0
+
+        while True:
+
+            steps += 1
+
+            if max_steps is not None and steps > max_steps:
+                break
             
-            done = False
-            
-            while not done:
-                action = np.argmax(self.q[state])
-                state, reward, won, lost, info = self.env.step(action)
+            env.render()
 
-                if reward == -10:
-                    penalties += 1
+            action = np.argmax(self.q[state])
 
-                epochs += 1
+            state, reward, won, lost, info = env.step(action)
 
-            total_penalties += penalties
-            total_epochs += epochs
+            if won or lost:
+                break
 
 '''
+    def train(self, state1, action1, reward, state2):
+        maxQNew = max([self.getQ(state2, a)
+        for a in self.actions])
+        self.learnQ(state1, action1, reward, maxQNew)
+
     def chooseAction(self, state):
         
         if random.random() < self.epsilon:
