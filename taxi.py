@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 from ql import QLAgent
 import matplotlib.pyplot as plt
 
