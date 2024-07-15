@@ -3,6 +3,8 @@ from ql import QLAgent
 import matplotlib.pyplot as plt
 
 env = gym.make("Taxi-v3")
+env.render()
+env.reset() # reset environment to a new, random state
 agent=QLAgent(env)
 
 agent.play()
