@@ -8,16 +8,16 @@ class QLAgent:
 
         self.q=q_table = np.zeros([env.observation_space.n, env.action_space.n])
 
-    def train(self, env, neps, alpha, gamma , epsilon):
+    def train(self, env, neps, alpha, gamma , epsilon, report):
 
         plot=[]
 
-        for i in range(1, neps):
+        for ep in range(1, neps):
+
             state,_ = env.reset()
-            epochs, penalties, reward, = 0, 0, 0
+            penalties, reward, = 0, 0
             done = False
             
-                ##print(f"Reward: {reward}")
             while not done:
                 if random.uniform(0, 1) < epsilon:
                     action = env.action_space.sample() # Explore action space
@@ -37,11 +37,11 @@ class QLAgent:
                     penalties += 1
 
                 state = next_state
-                epochs += 1
                 
                 
-                if(i%100==0):
-                    print(f"Iteration, Reward: {i, reward}")
+            if (ep % report==0):
+                print("epoch: %d / %d | reward: %f" % (ep, neps, reward))
+
             plot.append(reward)
             '''if i % 100 == 0:
                 clear_output(wait=True)
