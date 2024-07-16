@@ -16,8 +16,7 @@ class QLAgent:
             state,_ = env.reset()
             epochs, penalties, reward, = 0, 0, 0
             done = False
-            if(i%100==0):
-                print(f"Iteration, Reward: {i, reward}")
+            
                 ##print(f"Reward: {reward}")
             while not done:
                 if random.uniform(0, 1) < epsilon:
@@ -26,7 +25,8 @@ class QLAgent:
                     action = np.argmax(self.q[state]) # Exploit learned values
 
                 next_state, reward, won, lost, info = env.step(action) 
-                
+                if won or lost:
+                    break
                 old_value = self.q[state, action]
                 next_max = np.max(self.q[next_state])
                 
@@ -39,10 +39,15 @@ class QLAgent:
                 state = next_state
                 epochs += 1
                 
+                
+                if(i%100==0):
+                    print(f"Iteration, Reward: {i, reward}")
+            plot.append(reward)
             '''if i % 100 == 0:
                 clear_output(wait=True)
                 '''
-            plot[i]=reward    
+                
+                   
 
         return plot
 
