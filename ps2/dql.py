@@ -1,6 +1,6 @@
 ## hyper paramters...
 
-import math
+import numpy as np
 import random
 from collections import namedtuple, deque
 from itertools import count
@@ -74,7 +74,7 @@ class DQL(object):
 
     def train(
             self, 
-            num_episodes=100, 
+            num_episodes=600, 
             report=10,
             batch_size=128,
             gamma=0.99,
@@ -139,11 +139,31 @@ class DQL(object):
 
         return rewards    
 
+    def play(self, env):
+
+        state, _ = env.reset()
+
+        while True:
+
+            env.render()
+
+            with torch.no_grad():
+
+                # Run the state through the policy network to get the values of the
+                # different possible actions.  Then pick the action with the highest
+                # value.
+                action = np.argmax(self.policy_net(torch.from_numpy(state)).numpy())
+
+                state, _, won, lost, _ = env.step(action)
+
+                if won or lost:
+                    break
+
     def select_action(self, state, eps_start, eps_end, eps_decay):
 
         sample = random.random()
         eps_threshold = eps_end + (eps_start - eps_end) * \
-            math.exp(-1. * self.steps_done / eps_decay)
+            np.exp(-1. * self.steps_done / eps_decay)
         self.steps_done += 1
         if sample > eps_threshold:
             with torch.no_grad():
@@ -154,7 +174,6 @@ class DQL(object):
         else:
             return torch.tensor([[self.env.action_space.sample()]],dtype=torch.long)
 
-    ###############################################################################
         
     def optimize_model(self, optimizer, batch_size, gamma):
 
@@ -205,33 +224,3 @@ class DQL(object):
         # In-place gradient clipping
         torch.nn.utils.clip_grad_value_(self.policy_net.parameters(), 100)
         optimizer.step()
-
-    ##################################
-        
-    def play(self, env, max_steps=None):
-
-        actionTable=(torch.tensor(self.policy_net.state_dict(),dtype=torch.float32)).numpy()
-
-
-        while True:
-
-            steps += 1
-
-            if max_steps is not None and steps > max_steps:
-                break
-            
-            env.render()
-
-            action = np.argmax(actionTable[state])
-
-            state, reward, won, lost, info = env.step(action)
-
-            if won or lost:
-                break
-
-
-
-
-
-
-
