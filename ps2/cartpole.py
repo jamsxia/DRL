@@ -9,6 +9,9 @@ net = DQL(training_env)
 
 rewards = net.train()
 
+testing_env=gym.make("CartPole-v1", render_mode="human")
+net.play(testing_env)
+
 plt.plot(rewards)
 plt.xlabel('Episode')
 plt.ylabel('Reward')

@@ -74,7 +74,7 @@ class DQL(object):
 
     def train(
             self, 
-            num_episodes=600, 
+            num_episodes=100, 
             report=10,
             batch_size=128,
             gamma=0.99,
@@ -205,6 +205,29 @@ class DQL(object):
         # In-place gradient clipping
         torch.nn.utils.clip_grad_value_(self.policy_net.parameters(), 100)
         optimizer.step()
+
+    ##################################
+        
+    def play(self, env, max_steps=None):
+
+        actionTable=(torch.tensor(self.policy_net.state_dict(),dtype=torch.float32)).numpy()
+
+
+        while True:
+
+            steps += 1
+
+            if max_steps is not None and steps > max_steps:
+                break
+            
+            env.render()
+
+            action = np.argmax(actionTable[state])
+
+            state, reward, won, lost, info = env.step(action)
+
+            if won or lost:
+                break
 
 
 
