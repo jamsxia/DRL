@@ -4,10 +4,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
-testing_env = gym.make("CartPole-v1", render_mode="human")
-env = gym.make("CartPole-v1")
-model=DQL(env)
-model.train()
+#testing_env = gym.make("CartPole-v1", render_mode="human")
+testing_env = gym.make("CartPole-v1")
+net=DQL(testing_env)
+net.train()
 
 # set up matplotlib
 

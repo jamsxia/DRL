@@ -13,26 +13,16 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 
-device = torch.device(
-    "cuda" if torch.cuda.is_available() else
-    "mps" if torch.backends.mps.is_available() else
-    "cpu"
-)
-Transition = namedtuple('Transition',
-                        ('state', 'action', 'next_state', 'reward'))
-is_ipython = 'inline' in matplotlib.get_backend()
-if is_ipython:
-    from IPython import display
-
-plt.ion()
 
 class ReplayMemory(object):
-
+    
     def __init__(self, capacity):
         self.memory = deque([], maxlen=capacity)
 
     def push(self, *args):
         """Save a transition"""
+        Transition = namedtuple('Transition',
+                        ('state', 'action', 'next_state', 'reward'))
         self.memory.append(Transition(*args))
 
     def sample(self, batch_size):
@@ -83,8 +73,8 @@ class DQL(object):
         state, info = self.env.reset()
         n_observations = len(state)
 
-        self.policy_net = DQN(n_observations, n_actions).to(device)
-        self.target_net = DQN(n_observations, n_actions).to(device)
+        self.policy_net = DQN(n_observations, n_actions)
+        self.target_net = DQN(n_observations, n_actions)
         self.target_net.load_state_dict(self.policy_net.state_dict())
 
         self.optimizer = optim.AdamW(self.policy_net.parameters(), lr=self.lr, amsgrad=True)
@@ -93,6 +83,8 @@ class DQL(object):
 
         self.steps_done = 0
         self.episode_durations = []
+        self.transition= namedtuple('Transition',
+                        ('state', 'action', 'next_state', 'reward'))
 
     def select_action(self,state):
         sample = random.random()
@@ -106,32 +98,9 @@ class DQL(object):
                 # found, so we pick action with the larger expected reward.
                 return self.policy_net(state).max(1).indices.view(1, 1)
         else:
-            return torch.tensor([[self.env.action_space.sample()]], device=device, dtype=torch.long)
+            return torch.tensor([[self.env.action_space.sample()]],dtype=torch.long)
         
-    def plot_durations(self,show_result=False):
-        plt.figure(1)
-        durations_t = torch.tensor(self.episode_durations, dtype=torch.float)
-        if show_result:
-            plt.title('Result')
-        else:
-            plt.clf()
-            plt.title('Training...')
-        plt.xlabel('Episode')
-        plt.ylabel('Duration')
-        plt.plot(durations_t.numpy())
-        # Take 100 episode averages and plot them too
-        if len(durations_t) >= 100:
-            means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
-            means = torch.cat((torch.zeros(99), means))
-            plt.plot(means.numpy())
 
-        plt.pause(0.001)  # pause a bit so that plots are updated
-        if is_ipython:
-            if not show_result:
-                display.display(plt.gcf())
-                display.clear_output(wait=True)
-            else:
-                display.display(plt.gcf())
 
     def optimize_model(self):
         if len(self.memory) < self.batch_size:
@@ -145,7 +114,7 @@ class DQL(object):
         # Compute a mask of non-final states and concatenate the batch elements
         # (a final state would've been the one after which simulation ended)
         non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                              batch.next_state)), device=device, dtype=torch.bool)
+                                              batch.next_state)),  dtype=torch.bool)
         non_final_next_states = torch.cat([s for s in batch.next_state
                                                     if s is not None])
         state_batch = torch.cat(batch.state)
@@ -162,7 +131,7 @@ class DQL(object):
         # on the "older" target_net; selecting their best reward with max(1).values
         # This is merged based on the mask, such that we'll have either the expected
         # state value or 0 in case the state was final.
-        next_state_values = torch.zeros(self.batch_size, device=device)
+        next_state_values = torch.zeros(self.batch_size)
         with torch.no_grad():
             next_state_values[non_final_mask] = target_net(non_final_next_states).max(1).values
         # Compute the expected Q values
@@ -196,17 +165,17 @@ class DQL(object):
         for i_episode in range(num_episodes):
             # Initialize the environment and get its state
             state, info = self.env.reset()
-            state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
+            state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
             for t in count():
                 action = self.select_action(state)
                 observation, reward, terminated, truncated, _ = self.env.step(action.item())
-                reward = torch.tensor([reward], device=device)
+                reward = torch.tensor([reward])
                 done = terminated or truncated
 
                 if terminated:
                     next_state = None
                 else:
-                    next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+                    next_state = torch.tensor(observation, dtype=torch.float32).unsqueeze(0)
 
                 # Store the transition in memory
                 self.memory.push(state, action, next_state, reward)
@@ -227,7 +196,6 @@ class DQL(object):
 
                 if done:
                     self.episode_durations.append(t + 1)
-                    self.plot_durations()
                     break
                 plot_array.append(reward)
                 if (t % report==0):
